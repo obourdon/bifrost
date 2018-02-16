@@ -183,7 +183,7 @@
   register: ironic_install_prefix
   environment: "{{ bifrost_venv_env if enable_venv else {} }}"
 
-- name: "Set permissions for /var/lib/ironic for the ironic user"
+- name: "Set permissions for {{ ironic_instances_master_path }} for the ironic user"
   file:
     path: "{{ item }}"
     state: directory
@@ -191,9 +191,9 @@
     owner: "ironic"
     group: "ironic"
   with_items:
-    - "/var/lib/ironic"
-    - "/var/lib/ironic/master_images"
-    - "/var/lib/ironic/images"
+    - "{{ ironic_instances_master_path }}"
+    - "{{ ironic_instances_master_path }}/master_images"
+    - "{{ ironic_instances_master_path }}/images"
 
 - name: "Set permissions for /var/log/ironic for the ironic user"
   file:
@@ -214,7 +214,7 @@
   with_items:
     - { service_path: "{{ ironic_install_prefix.stdout | default('') }}", service_name: 'ironic-api', username: 'ironic', args: '--config-file /etc/ironic/ironic.conf'}
     - { service_path: "{{ ironic_install_prefix.stdout | default('') }}", service_name: 'ironic-conductor', username: 'ironic', args: '--config-file /etc/ironic/ironic.conf'}
-- name: "Create and populate /tftpboot"
+- name: "Create and populate {{ ironic_tftp_master_path }}"
   include: create_tftpboot.yml
 - name: "Setup Inventory Hosts Directory"
   file:

@@ -2,6 +2,10 @@
 # The ironic API URL for bifrost operations.  Defaults to localhost.
 # ironic_url: "http://localhost:6385/"
 
+# The locations where ironic will store contents
+# ironic_tftp_master_path: "/tftpboot"
+# ironic_instances_master_path: "/var/lib/ironic"
+
 # The network interface that bifrost will be operating on.  Defaults
 # to virbr0 in roles, can be overridden here.
 # network_interface: "virbr0"
