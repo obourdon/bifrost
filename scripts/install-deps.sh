@@ -1,10 +1,14 @@
 #!/bin/bash
-set -eu
+set -eux
 
 declare -A PKG_MAP
 
 # workaround: for latest bindep to work, it needs to use en_US local
 export LANG=c
+
+# Lets use python3 by default
+USE_PYTHON3=${USE_PYTHON3:-true}
+
 
 CHECK_CMD_PKGS=(
     gcc
@@ -18,6 +22,14 @@ CHECK_CMD_PKGS=(
     venv
     wget
 )
+
+function get_pip () {
+    if [ ! $(which $1) ]; then
+        wget -O /tmp/get-pip.py https://bootstrap.pypa.io/3.2/get-pip.py
+        sudo -H -E ${PYTHON} /tmp/get-pip.py
+    fi
+    PIP=$(which $1)
+}
 
 source /etc/os-release || source /usr/lib/os-release
 case ${ID,,} in
@@ -51,18 +63,33 @@ case ${ID,,} in
     export DEBIAN_FRONTEND=noninteractive
     INSTALLER_CMD="sudo -H -E apt-get -y install"
     CHECK_CMD="dpkg -l"
-    PKG_MAP=(
-        [gcc]=gcc
-        [libffi]=libffi-dev
-        [libopenssl]=libssl-dev
-        [lsb-release]=lsb-release
-        [make]=make
-        [net-tools]=net-tools
-        [python]=python-minimal
-        [python-devel]=libpython-dev
-        [venv]=python-virtualenv
-        [wget]=wget
-    )
+    if [[ ${USE_PYTHON3} =~ "true" ]]; then
+        PKG_MAP=(
+            [gcc]=gcc
+            [libffi]=libffi-dev
+            [libopenssl]=libssl-dev
+            [lsb-release]=lsb-release
+            [make]=make
+            [net-tools]=net-tools
+            [python]=python-minimal
+            [python-devel]=libpython3-dev
+            [venv]=python3-virtualenv
+            [wget]=wget
+        )
+    else
+        PKG_MAP=(
+            [gcc]=gcc
+            [libffi]=libffi-dev
+            [libopenssl]=libssl-dev
+            [lsb-release]=lsb-release
+            [make]=make
+            [net-tools]=net-tools
+            [python]=python-minimal
+            [python-devel]=libpython-dev
+            [venv]=python-virtualenv
+            [wget]=wget
+        )
+    fi
     EXTRA_PKG_DEPS=()
     sudo apt-get update
     ;;
@@ -94,6 +121,17 @@ case ${ID,,} in
     *) echo "ERROR: Supported package manager not found.  Supported: apt, dnf, yum, zypper"; exit 1;;
 esac
 
+# If we're using a venv, we need to work around sudo not
+# keeping the path even with -E.
+if [[ ${USE_PYTHON3} =~ "true" ]]; then
+    PYTHON=$(which python3)
+    get_pip pip3
+    VIRTUALENV_OPTS="-p python3"
+else
+    PYTHON=$(which python)
+    get_pip pip
+fi
+
 # if running in OpenStack CI, then make sure epel is enabled
 # since it may already be present (but disabled) on the host
 if env | grep -q ^ZUUL; then
@@ -103,7 +141,7 @@ if env | grep -q ^ZUUL; then
     fi
 fi
 
-if ! $(python --version &>/dev/null); then
+if ! $(${PYTHON} --version &>/dev/null); then
     ${INSTALLER_CMD} ${PKG_MAP[python]}
 fi
 if ! $(gcc -v &>/dev/null); then
@@ -113,7 +151,7 @@ if ! $(wget --version &>/dev/null); then
     ${INSTALLER_CMD} ${PKG_MAP[wget]}
 fi
 if [ -n "${VENV-}" ]; then
-    if ! $(python -m virtualenv --version &>/dev/null); then
+    if ! $(${PYTHON} -m virtualenv --version &>/dev/null); then
         ${INSTALLER_CMD} ${PKG_MAP[venv]}
     fi
 fi
@@ -136,7 +174,7 @@ if [ -n "${VENV-}" ]; then
     echo "NOTICE: Using virtualenv for this installation."
     if [ ! -f ${VENV}/bin/activate ]; then
         # only create venv if one doesn't exist
-        sudo -H -E python -m virtualenv --no-site-packages ${VENV}
+        eval sudo -H -E ${PYTHON} -m virtualenv --no-site-packages ${VENV} ${VIRTUALENV_OPTS:-""}
     fi
     # Note(cinerama): activate is not compatible with "set -u";
     # disable it just for this line.
@@ -147,10 +185,6 @@ if [ -n "${VENV-}" ]; then
 else
     echo "NOTICE: Not using virtualenv for this installation."
 fi
-
-# If we're using a venv, we need to work around sudo not
-# keeping the path even with -E.
-PYTHON=$(which python)
 
 # To install python packages, we need pip.
 #
@@ -165,19 +199,11 @@ PYTHON=$(which python)
 # so we can quickly and easily adjust version parameters.
 # See bug 1536627.
 #
-# Note(cinerama): If pip is linked to pip3, the rest of the install
-# won't work. Remove the alternatives. This is due to ansible's
-# python 2.x requirement.
-if [[ $(readlink -f /etc/alternatives/pip) =~ "pip3" ]]; then
-    sudo -H update-alternatives --remove pip $(readlink -f /etc/alternatives/pip)
-fi
 
-if ! which pip; then
+if [ ! -f ${PIP} ]; then
     wget -O /tmp/get-pip.py https://bootstrap.pypa.io/3.2/get-pip.py
     sudo -H -E ${PYTHON} /tmp/get-pip.py
 fi
-
-PIP=$(which pip)
 
 sudo -H -E ${PIP} install "pip>6.0"
 

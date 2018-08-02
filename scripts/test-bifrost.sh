@@ -11,6 +11,7 @@ USE_DHCP="false"
 USE_VENV="false"
 BUILD_IMAGE="false"
 BAREMETAL_DATA_FILE=${BAREMETAL_DATA_FILE:-'/tmp/baremetal.json'}
+USE_PYTHON3=${USE_PYTHON3:-true}
 
 # Set defaults for ansible command-line options to drive the different
 # tests.
@@ -95,6 +96,12 @@ elif [ $SOURCE = "test-bifrost-keystone-auth.sh" ]; then
      ENABLE_KEYSTONE="true"
 fi
 
+if [ $USE_PYTHON3 = "false" ]; then
+    PYTHON="python"
+else
+    PYTHON="python3"
+fi
+
 if [ ${USE_VENV} = "true" ]; then
     export VENV=/opt/stack/bifrost
     $SCRIPT_HOME/env-setup.sh
@@ -105,11 +112,11 @@ if [ ${USE_VENV} = "true" ]; then
     set -u
     ANSIBLE=${VENV}/bin/ansible-playbook
     ENABLE_VENV="true"
-    ANSIBLE_PYTHON_INTERP=${VENV}/bin/python
+    ANSIBLE_PYTHON_INTERP=${VENV}/bin/${PYTHON}
 else
     $SCRIPT_HOME/env-setup.sh
     ANSIBLE=${HOME}/.local/bin/ansible-playbook
-    ANSIBLE_PYTHON_INTERP=$(which python)
+    ANSIBLE_PYTHON_INTERP=$(which ${PYTHON})
 fi
 
 # Adjust options for DHCP, VM, or Keystone tests
@@ -186,6 +193,7 @@ export BIFROST_INVENTORY_SOURCE=${BAREMETAL_DATA_FILE}
 ${ANSIBLE} -vvvv \
     -i inventory/bifrost_inventory.py \
     ${TEST_PLAYBOOK} \
+    -e ansible_python_interpreter="${ANSIBLE_PYTHON_INTERP}" \
     -e use_cirros=${USE_CIRROS} \
     -e testing_user=${TESTING_USER} \
     -e test_vm_num_nodes=${TEST_VM_NUM_NODES} \

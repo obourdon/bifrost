@@ -33,6 +33,8 @@
     run: playbooks/legacy/bifrost-integration-dhcp/run.yaml
     post-run: playbooks/legacy/bifrost-integration-dhcp/post.yaml
     timeout: 7200
+  vars:
+    use_python3: True
 
 - job:
     name: bifrost-integration-dhcp-ubuntu-xenial
@@ -43,11 +45,15 @@
     name: bifrost-integration-dhcp-centos-7
     parent: bifrost-integration-dhcp
     nodeset: centos-7
+  var:
+    use_python3: False
 
 - job:
     name: bifrost-integration-dhcp-opensuse-423
     parent: bifrost-integration-dhcp
     nodeset: opensuse-423
+  var:
+    use_python3: False
 
 - job:
     name: bifrost-integration-dibipa-debian
@@ -65,11 +71,15 @@
     name: bifrost-integration-dibipa-debian-centos-7
     parent: bifrost-integration-dibipa-debian
     nodeset: centos-7
+  var:
+    use_python3: False
 
 - job:
     name: bifrost-integration-dibipa-debian-opensuse-423
     parent: bifrost-integration-dibipa-debian
     nodeset: opensuse-423
+  var:
+    use_python3: False
 
 - job:
     name: bifrost-integration-tinyipa
@@ -87,8 +97,12 @@
     name: bifrost-integration-tinyipa-centos-7
     parent: bifrost-integration-tinyipa
     nodeset: centos-7
+  var:
+    use_python3: False
 
 - job:
     name: bifrost-integration-tinyipa-opensuse-423
     parent: bifrost-integration-tinyipa
     nodeset: opensuse-423
+  var:
+    use_python3: False

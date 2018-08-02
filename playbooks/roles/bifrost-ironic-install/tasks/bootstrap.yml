@@ -155,14 +155,14 @@
 
 - name: "Create ironic DB Schema"
   command: ironic-dbsync --config-file /etc/ironic/ironic.conf create_schema
-  environment: "{{ bifrost_venv_env if enable_venv else {} }}"
+  environment: "{{ bifrost_venv_env }}"
   when: >
       ironic.database.host == 'localhost' and
       test_created_db.changed | bool == true
 
 - name: "Upgrade ironic DB Schema"
   command: ironic-dbsync --config-file /etc/ironic/ironic.conf upgrade
-  environment: "{{ bifrost_venv_env if enable_venv else {} }}"
+  environment: "{{ bifrost_venv_env }}"
   when: >
       ironic.database.host != 'localhost' or
       test_created_db.changed | bool == false

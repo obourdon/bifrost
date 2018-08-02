@@ -26,23 +26,12 @@ function check_get_module () {
         wget "${module_url_base}/${module}.py" -O "${PLAYBOOKS_LIBRARY_PATH}/${module}.py"
 }
 
-# Note(TheJulia): These files should be in the ansible library folder
-# and this functionality exists for a level of ansible 1.9.x
-# backwards compatability although the modules were developed
-# for Ansible 2.0.
-check_get_module os_ironic \
-    https://raw.githubusercontent.com/ansible/ansible-modules-core/stable-2.0/cloud/openstack
-
-check_get_module os_ironic_node \
-    https://raw.githubusercontent.com/ansible/ansible-modules-core/stable-2.0/cloud/openstack
-
-# os_ironic_inspect has appeared in Ansible 2.1
-check_get_module os_ironic_inspect \
-    https://raw.githubusercontent.com/ansible/ansible-modules-extras/stable-2.1/cloud/openstack
-
-# os_keystone_service has appeared in Ansible 2.2
-check_get_module os_keystone_service \
-    https://raw.githubusercontent.com/ansible/ansible-modules-extras/stable-2.2/cloud/openstack
+# Note(TheJulia): This is in order to download modules which are needed
+# from newer ansible versions, particullarlly useful in development of
+# new features.
+#
+# check_get_module os_keystone_service \
+#    https://raw.githubusercontent.com/ansible/ansible-modules-extras/stable-2.2/cloud/openstack
 
 # NOTE(pas-ha) the following is a temporary workaround for third-party CI
 # scripts that try to source Ansible's hacking/env-setup

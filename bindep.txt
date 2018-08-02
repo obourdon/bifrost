@@ -14,9 +14,14 @@ mariadb             [platform:opensuseproject-42]
 mariadb-server      [platform:redhat]
 mysql-server        [platform:dpkg]
 net-tools
-python              [platform:rpm]
-python-minimal      [platform:dpkg]
-python-devel        [platform:rpm]
-python-dev          [platform:dpkg]
-python-virtualenv
+python36            [platform:redhat platform:fedora platform:rhel !platform:centos !platform:dpkg]
+# Opensuse does not support python 3.5 which is the minimum for ansible
+python              [platform:opensuseproject-42 platform:centos]
+python-devel        [platform:centos]
+python3-minimal      [platform:dpkg]
+python3-devel        [platform:fedora]
+python               [platform:opensuseproject-42]
+python3-dev          [platform:dpkg]
+python3-mysqldb      [platform:dpkg]
+python3-virtualenv   [!platform:dpkg !platform:centos]
 wget

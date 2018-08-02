@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    Support for the Cisco UCS interfaces utilizing the ``UcsSdk`` has been
+    deprecated due to a lack of Python3 support for the ``UcsSdk`` library.

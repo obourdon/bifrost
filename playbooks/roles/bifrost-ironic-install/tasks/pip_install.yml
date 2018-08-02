@@ -57,4 +57,16 @@
   retries: 5
   delay: 10
   when: source_install is defined and (source_install | bool == true)
+        and ansible_python.get('executable', '/usr/bin/python') is not match('.*/python3$')
   environment: "{{ bifrost_venv_env if enable_venv else {} }}"
+
+- name: "Install from {{ sourcedir }} using pip3"
+  command: pip3 install {{ sourcedir }} {{ extra_args | default('') }}
+  register: pip_package_install_done
+  until: pip_package_install_done|succeeded
+  retries: 5
+  delay: 10
+  when: source_install is defined and (source_install | bool == true)
+        and ansible_python.get('executable', '/usr/bin/python') is match('.*/python3$')
+  environment: "{{ bifrost_venv_env if enable_venv else {} }}"
+

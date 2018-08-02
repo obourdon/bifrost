@@ -64,13 +64,16 @@
   environment: "{{ venv }}"
   when: skip_install is not defined
 
+# TODO(TheJulia): UCS Support is deprecated as the helper module
+# "UcsSdk" is not packaged for Python3 and is incompatible with
+# python3.
 - name: "UcsSdk - Install from pip"
   include: pip_install.yml
     package=UcsSdk
     version=0.8.1.9
     extra_args="-c {{ upper_constraints_file }}"
   environment: "{{ venv }}"
-  when: skip_install is not defined
+  when: skip_install is not defined and ansible_python.get('executable', '/usr/bin/python') is not match('.*/python3$')
 
 # TODO(dtantsur): only do this is the iscsi deploy interface is enabled
 - name: "Install iSCSI client if PXE driver support is enabled"
