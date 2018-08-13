@@ -16,6 +16,11 @@
 # We should likely address that at some point, however I think a user
 # should be the driver of that work.
 
+- name: "Initialize default venv"
+  set_fact:
+    venv:
+      OS_IDENTITY_API_VERSION: "3"
+
 - name: "If VENV is set in the environment, enable installation into venv"
   set_fact:
     enable_venv: true
@@ -39,6 +44,22 @@
       ironic.keystone.default_username is undefined or
       ironic.keystone.default_password is undefined
 
+- name: "Retrieve venv python path"
+  shell: "echo \"import sys\\nprint(':'.join(sys.path))\" | {{ ansible_python.get('executable', '/usr/bin/python').split('/')[-1] }}"
+  environment: "{{ bifrost_venv_env | default({}) }}"
+  register: venv_pythonpath_result
+  when: enable_venv
+
+- name: "Compute venv python path"
+  set_fact:
+    venv_pythonpath:
+      PYTHONPATH: "{{ venv_pythonpath_result.get('stdout', '') }}"
+  when: enable_venv
+
+- name: "Compute proper complete venv including proper Python path"
+  set_fact:
+    venv: "{{ venv | combine(bifrost_venv_env | default({})) | combine(venv_pythonpath | default({})) }}"
+
 - name: "Ensure service project is present"
   os_project:
     name: "{{ ironic.service_catalog.project_name }}"
@@ -53,8 +74,7 @@
       project_name: "{{ keystone.bootstrap.project_name | default('admin') }}"
       project_domain_id: "default"
       user_domain_id: "default"
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Create service user for ironic"
@@ -72,8 +92,7 @@
       project_domain_id: "default"
       user_domain_id: "default"
     wait: yes
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Associate ironic user to admin role"
@@ -89,8 +108,7 @@
       project_domain_id: "default"
       user_domain_id: "default"
     wait: yes
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Create keystone service record for ironic"
@@ -107,8 +125,7 @@
       project_domain_id: "default"
       user_domain_id: "default"
     wait: yes
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Check ironic admin endpoint exists"
@@ -209,8 +226,7 @@
       project_name: "{{ keystone.bootstrap.project_name | default('admin') }}"
       project_domain_id: "default"
       user_domain_id: "default"
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Create baremetal_observer role"
@@ -224,8 +240,7 @@
       project_name: "{{ keystone.bootstrap.project_name | default('admin') }}"
       project_domain_id: "default"
       user_domain_id: "default"
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Create baremetal project"
@@ -242,8 +257,7 @@
       project_name: "{{ keystone.bootstrap.project_name | default('admin') }}"
       project_domain_id: "default"
       user_domain_id: "default"
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Create bifrost user"
@@ -260,8 +274,7 @@
       project_domain_id: "default"
       user_domain_id: "default"
     wait: yes
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
 
 - name: "Associate bifrost user with baremetal_admin"
@@ -277,6 +290,5 @@
       project_domain_id: "default"
       user_domain_id: "default"
     wait: yes
-  environment:
-    OS_IDENTITY_API_VERSION: "3"
+  environment: "{{ venv }}"
   no_log: true
